@@ -72,8 +72,13 @@ func StringWithTail(s string, width uint, tail string) string {
 // ansi sequences intact.
 func (w *Writer) Write(b []byte) (int, error) {
 	tw := ansi.PrintableRuneWidth(w.tail)
+	// Width of tail is wider than desired width, so return tail
 	if w.width < uint(tw) {
 		return w.buf.WriteString(w.tail)
+	}
+	// Content is within desired width, so return content unaltered.
+	if ansi.PrintableRuneWidth(string(b)) <= int(w.width) {
+		return w.ansiWriter.Write(b)
 	}
 
 	w.width -= uint(tw)

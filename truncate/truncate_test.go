@@ -6,96 +6,105 @@ import (
 	"testing"
 
 	"github.com/muesli/reflow/ansi"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestTruncate(t *testing.T) {
 	t.Parallel()
 
 	tt := []struct {
+		name     string
 		width    uint
 		tail     string
 		in       string
 		expected string
 	}{
-		// No-op, should pass through:
 		{
+			"No-op, should pass through",
 			10,
 			"",
 			"foo",
 			"foo",
 		},
-		// Basic truncate:
 		{
+			"Same width, with tail char.",
+			3,
+			"…",
+			"foo",
+			"foo",
+		},
+		{
+			"Basic truncate:",
 			3,
 			"",
 			"foobar",
 			"foo",
 		},
-		// Truncate with tail:
 		{
+			"Truncate with tail:",
 			4,
 			".",
 			"foobar",
 			"foo.",
 		},
-		// Same width:
 		{
+			"Same width:",
 			3,
 			"",
 			"foo",
 			"foo",
 		},
-		// Tail is longer than width:
 		{
-			2,
+			"Tail is longer than width:", 2,
 			"...",
 			"foo",
 			"...",
 		},
-		// Spaces only:
 		{
+			"Spaces only:",
 			2,
 			"…",
 			"    ",
 			" …",
 		},
-		// Double-width runes:
 		{
+			"Double-width runes:",
 			2,
 			"",
 			"你好",
 			"你",
 		},
-		// Double-width rune is dropped if it is too wide:
 		{
+			"Double-width rune is dropped if it is too wide:",
 			1,
 			"",
 			"你",
 			"",
 		},
-		// ANSI sequence codes and double-width characters:
 		{
+			"ANSI sequence codes and double-width characters:",
 			3,
 			"",
 			"\x1B[38;2;249;38;114m你好\x1B[0m",
 			"\x1B[38;2;249;38;114m你\x1B[0m",
 		},
-		// Reset styling sequence is added after truncate:
 		{
+			"Reset styling sequence is added after truncate:",
 			1,
 			"",
 			"\x1B[7m--",
 			"\x1B[7m-\x1B[0m",
 		},
-		// Reset styling sequence not added if operation is a noop:
 		{
+			"Reset styling sequence not added if operation is a noop:",
 			2,
 			"",
 			"\x1B[7m--",
 			"\x1B[7m--",
 		},
-		// Tail is printed before reset sequence:
 		{
+			"Tail is printed before reset sequence:",
 			3,
 			"…",
 			"\x1B[38;5;219mHiya!",
@@ -103,17 +112,15 @@ func TestTruncate(t *testing.T) {
 		},
 	}
 
-	for i, tc := range tt {
-		f := NewWriter(tc.width, tc.tail)
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			f := NewWriter(tc.width, tc.tail)
 
-		_, err := f.Write([]byte(tc.in))
-		if err != nil {
-			t.Error(err)
-		}
+			_, err := f.Write([]byte(tc.in))
+			require.NoError(t, err)
 
-		if f.String() != tc.expected {
-			t.Errorf("Test %d, expected:\n\n`%s`\n\nActual Output:\n\n`%s`", i, tc.expected, f.String())
-		}
+			assert.Equal(t, tc.expected, f.String())
+		})
 	}
 }
 
