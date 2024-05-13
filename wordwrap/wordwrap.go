@@ -5,7 +5,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/muesli/reflow/ansi"
+	"github.com/leg100/reflow/ansi"
 )
 
 var (

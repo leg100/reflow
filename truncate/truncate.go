@@ -6,7 +6,7 @@ import (
 
 	"github.com/mattn/go-runewidth"
 
-	"github.com/muesli/reflow/ansi"
+	"github.com/leg100/reflow/ansi"
 )
 
 type Writer struct {

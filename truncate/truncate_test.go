@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/muesli/reflow/ansi"
+	"github.com/leg100/reflow/ansi"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
