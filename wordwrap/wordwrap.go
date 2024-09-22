@@ -22,9 +22,10 @@ type WordWrap struct {
 	Newline      []rune
 	KeepNewlines bool
 
-	buf   bytes.Buffer
-	space bytes.Buffer
-	word  ansi.Buffer
+	buf          bytes.Buffer
+	space        bytes.Buffer
+	word         ansi.Buffer
+	lastcolorseq bytes.Buffer
 
 	lineLen int
 	ansi    bool
@@ -73,7 +74,15 @@ func (w *WordWrap) addWord() {
 }
 
 func (w *WordWrap) addNewLine() {
+	if w.lastcolorseq.Len() > 0 {
+		// reset color sequence before adding new line
+		w.buf.Write([]byte{'\x1B', '[', '0', 'm'})
+	}
 	_, _ = w.buf.WriteRune('\n')
+	if w.lastcolorseq.Len() > 0 {
+		// re-start color sequence on new line
+		w.buf.Write(w.lastcolorseq.Bytes())
+	}
 	w.lineLen = 0
 	w.space.Reset()
 }
@@ -102,12 +111,21 @@ func (w *WordWrap) Write(b []byte) (int, error) {
 		if c == '\x1B' {
 			// ANSI escape sequence
 			_, _ = w.word.WriteRune(c)
+			_, _ = w.lastcolorseq.WriteRune(c)
 			w.ansi = true
 		} else if w.ansi {
 			_, _ = w.word.WriteRune(c)
+			_, _ = w.lastcolorseq.WriteRune(c)
 			if (c >= 0x40 && c <= 0x5a) || (c >= 0x61 && c <= 0x7a) {
 				// ANSI sequence terminated
 				w.ansi = false
+				if bytes.HasSuffix(w.word.Bytes(), []byte("[0m")) {
+					// reset sequence
+					w.lastcolorseq.Reset()
+				} else if c != 'm' {
+					// not a color code sequence
+					w.lastcolorseq.Reset()
+				}
 			}
 		} else if inGroup(w.Newline, c) {
 			// end of current line

@@ -124,7 +124,15 @@ func TestWordWrap(t *testing.T) {
 		// ANSI control codes don't get wrapped:
 		{
 			"\x1B[38;2;249;38;114m(\x1B[0m\x1B[38;2;248;248;242mjust another test\x1B[38;2;249;38;114m)\x1B[0m",
-			"\x1B[38;2;249;38;114m(\x1B[0m\x1B[38;2;248;248;242mjust\nanother\ntest\x1B[38;2;249;38;114m)\x1B[0m",
+			"\x1B[38;2;249;38;114m(\x1B[0m\x1B[38;2;248;248;242mjust\x1B[0m\n\x1B[38;2;248;248;242manother\x1B[0m\n\x1B[38;2;248;248;242mtest\x1B[38;2;249;38;114m)\x1B[0m",
+			3,
+			true,
+		},
+		// ANSI control codes are reset at the end of the line and re-activated
+		// on the next line
+		{
+			"\x1B[38;2;249;38;114m(\x1B[0m\x1B[38;2;248;248;242mjust another test\x1B[38;2;249;38;114m)\x1B[0m",
+			"\x1B[38;2;249;38;114m(\x1B[0m\x1B[38;2;248;248;242mjust\x1B[0m\n\x1B[38;2;248;248;242manother\x1B[0m\n\x1B[38;2;248;248;242mtest\x1B[38;2;249;38;114m)\x1B[0m",
 			3,
 			true,
 		},
